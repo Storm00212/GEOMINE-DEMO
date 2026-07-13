@@ -101,6 +101,37 @@ function wireEvents() {
     }
   });
 
+  // Theme toggle.
+  const themeBtn = document.getElementById('themeToggle');
+  if (themeBtn) {
+    const saved = localStorage.getItem('geomine_theme') || 'dark';
+    if (saved === 'light') document.body.setAttribute('data-theme', 'light');
+    updateThemeIcon(saved);
+    themeBtn.addEventListener('click', () => {
+      const current = document.body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+      document.body.setAttribute('data-theme', current === 'light' ? 'light' : '');
+      localStorage.setItem('geomine_theme', current);
+      updateThemeIcon(current);
+    });
+  }
+
+  // Print report.
+  const printBtn = document.getElementById('printBtn');
+  if (printBtn) printBtn.addEventListener('click', () => window.print());
+
+  // Keyboard shortcuts.
+  document.addEventListener('keydown', (ev) => {
+    if (ev.target.tagName === 'INPUT' || ev.target.tagName === 'TEXTAREA') return;
+    const key = ev.key.toLowerCase();
+    if (key === '1') showScreen('dashboard');
+    if (key === '2') showScreen('entry');
+    if (key === '3') showScreen('status');
+    if (key === '4') showScreen('detail');
+    if (key === '5') showScreen('reports');
+    if (key === 't') { themeBtn?.click(); }
+    if (key === 'escape') showScreen('dashboard');
+  });
+
   // Global hooks used by other modules.
   window.App.onSimTick = handleSimTick;
   window.App.refreshAll = refreshAll;
@@ -241,8 +272,10 @@ function renderKpis() {
       <div class="kpi-label">${k.label}</div>
       <div class="kpi-value mono" data-target="${k.value}">0</div>
       <div class="kpi-spark"></div>
+      <canvas class="kpi-sparkline" width="160" height="36"></canvas>
     </div>`).join('');
   statGrid.querySelectorAll('.kpi-value').forEach(el => animateCounter(el, parseFloat(el.dataset.target)));
+  renderSparklines();
 }
 
 /** Lightweight live refresh (called on every simulation tick). */
@@ -255,6 +288,7 @@ function liveRefreshDashboard() {
   renderRecent('recentList');
   Charts.update('dashboard');
   Demo.renderInsights('aiInsights');
+  renderSparklines();
 }
 
 function renderDashboard() {
@@ -496,3 +530,88 @@ window.showScreen = showScreen;
 window.openMachine = openMachine;
 window.submitReading = submitReading;
 window.downloadCsv = downloadCsv;
+window.generatePdfReport = generatePdfReport;
+
+/* ---------------------------------------------------------
+   HELPERS — theme, sparklines, PDF, keyboard hints
+   --------------------------------------------------------- */
+function updateThemeIcon(theme) {
+  const btn = document.getElementById('themeToggle');
+  if (!btn) return;
+  btn.innerHTML = theme === 'light' ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
+  btn.title = theme === 'light' ? 'Switch to dark theme' : 'Switch to light theme';
+}
+
+function sparklineData(target, len) {
+  const arr = [];
+  for (let i = 0; i < (len || 12); i++) {
+    arr.push(target + Math.sin(i * 0.9) * target * 0.18 + (Math.random() - 0.5) * target * 0.12);
+  }
+  return arr;
+}
+
+function renderSparklines() {
+  const cards = document.querySelectorAll('#statGrid .kpi-card');
+  cards.forEach((card, idx) => {
+    const canvas = card.querySelector('.kpi-sparkline');
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const w = canvas.width, h = canvas.height;
+    const data = sparklineData(parseFloat(card.querySelector('.kpi-value')?.dataset.target || 0));
+    const min = Math.min(...data), max = Math.max(...data);
+    const range = max - min || 1;
+    ctx.clearRect(0, 0, w, h);
+    ctx.beginPath();
+    ctx.strokeStyle = card.classList.contains('kpi-red') ? THEME.red : card.classList.contains('kpi-amber') ? THEME.amber : card.classList.contains('kpi-green') ? THEME.green : THEME.cyan;
+    ctx.lineWidth = 1.8;
+    ctx.lineJoin = 'round';
+    data.forEach((v, i) => {
+      const x = (i / (data.length - 1)) * w;
+      const y = h - 2 - ((v - min) / range) * (h - 6);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  });
+}
+
+function generatePdfReport() {
+  if (typeof window.jspdf === 'undefined') { toast('PDF library not loaded', 'warning'); return; }
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF();
+  doc.setFont('helvetica', 'bold');
+  doc.setFontSize(18);
+  doc.text('GeoMine PMS — Fleet Brief', 14, 18);
+  doc.setFont('helvetica', 'normal');
+  doc.setFontSize(10);
+  doc.text('Generated: ' + new Date().toLocaleString(), 14, 24);
+
+  doc.setFontSize(13);
+  doc.text('Fleet Summary', 14, 34);
+  doc.setFontSize(10);
+  let y = 42;
+  STATE.machines.forEach(m => {
+    const health = getHealthIndex(m.id);
+    const loading = getLoadingPct(m.id);
+    const rec = getMaintenanceRecommendation(m.id);
+    const line = `${m.name} | ${m.location} | Health: ${fmt(health)} | Loading: ${fmt(loading,'%')} | Status: ${rec.status.replace(/_/g,' ')}`;
+    doc.text(line, 14, y);
+    y += 7;
+    if (y > 280) { doc.addPage(); y = 20; }
+  });
+
+  y += 4;
+  doc.setFontSize(13);
+  doc.text('AI Insights', 14, y);
+  y += 8;
+  doc.setFontSize(10);
+  Demo.generateInsights().slice(0, 10).forEach(ins => {
+    const line = `[${ins.severity.toUpperCase()}] ${ins.machine}: ${ins.title} (${ins.confidence}%)`;
+    doc.text(line, 14, y);
+    y += 6;
+    if (y > 280) { doc.addPage(); y = 20; }
+  });
+
+  doc.save('geomine-fleet-brief.pdf');
+  toast('PDF brief exported', 'success');
+  pushActivity({ type: 'export', text: 'PDF fleet brief exported' });
+}
