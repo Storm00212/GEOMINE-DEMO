@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>GeoMine PMS — Architecture Overview</title>
+  <style>
+    /* Word-import friendly baseline */
+    body {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 12pt;
+      line-height: 1.35;
+      color: #000;
+      margin: 0;
+      padding: 40px;
+    }
+    h1 {
+      font-size: 18pt;
+      font-weight: bold;
+      margin: 0 0 6px;
+    }
+    h2 {
+      font-size: 14pt;
+      font-weight: bold;
+      margin: 18px 0 8px;
+    }
+    h3 {
+      font-size: 12pt;
+      font-weight: bold;
+      margin: 14px 0 6px;
+    }
+    p, li {
+      font-size: 12pt;
+      margin: 0 0 8px;
+    }
+    ul, ol {
+      margin: 0 0 10px 24px;
+      padding: 0;
+    }
+    li {
+      margin-bottom: 4px;
+    }
+    pre, code {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 10pt;
+    }
+    pre {
+      background: #f4f4f4;
+      border: 1px solid #ccc;
+      padding: 10px;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    table {
+      border-collapse: collapse;
+      width: 100%;
+      margin: 0 0 14px;
+    }
+    td, th {
+      border: 1px solid #000;
+      padding: 6px 8px;
+      font-size: 12pt;
+      vertical-align: top;
+    }
+    th {
+      font-weight: bold;
+      background: #eee;
+    }
+    hr {
+      border: none;
+      border-top: 1px solid #000;
+      margin: 18px 0;
+    }
+    .mono {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 10pt;
+    }
+  </style>
+</head>
+<body>
+
+<h1>GeoMine PMS — Architecture Overview</h1>
+<p><strong>Full-Stack Production System &middot; Presentation / Slide Deck Reference</strong></p>
+<hr />
+
+<h2>1. SYSTEM OVERVIEW</h2>
+
+<p>GeoMine Predictive Maintenance System (PMS) is a full-stack industrial web application for monitoring diesel generators across mining sites.</p>
+
+<p><strong>What it does:</strong></p>
+<ul>
+  <li>Miners log field readings from tablets or laptops</li>
+  <li>Admins and IT staff view live fleet analytics, predictive insights, maintenance priorities, health indices and exportable reports</li>
+  <li>Real-time telemetry streaming from generators to dashboard</li>
+  <li>Role-based access control (Admin, Miner, IT)</li>
+  <li>AI-style predictive maintenance insights with confidence levels</li>
+  <li>CSV and PDF report generation</li>
+  <li>Activity logging and audit trail</li>
+</ul>
+
+<p><strong>Who uses it:</strong></p>
+<ul>
+  <li><strong>Miners (field):</strong> Log generator readings, view own submission history, see generator status</li>
+  <li><strong>Admins (office):</strong> Full fleet analytics, live charts, AI insights, CSV export, demo controls</li>
+  <li><strong>IT / Systems:</strong> System health monitoring, user management, infrastructure oversight</li>
+</ul>
+
+<hr />
+
+<h2>2. HIGH-LEVEL ARCHITECTURE</h2>
+
+<pre>
+┌─────────────────────────────────────────────────────────────────────┐
+│                         USERS / ACTORS                              │
+│   Miner (field)   │   Admin (office)   │   IT / Systems Engineer    │
+└──────────┬──────────────┬──────────────────────────┬───────────────┘
+           │              │                          │
+           ▼              ▼                          ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                     FRONTEND LAYER                                  │
+│   React + TypeScript SPA                                             │
+│   • Login page (SSO / email)                                        │
+│   • Dashboard with live charts                                      │
+│   • Generator detail views                                          │
+│   • CSV / PDF export                                                │
+│   • Runs on CDN / Vercel / Netlify                                  │
+└────────────────────────────┬────────────────────────────────────────┘
+                             │ HTTPS / WebSocket
+                             ▼
+┌─────────────────────────────────────────────────────────────────────┐
+│                    API GATEWAY / BACKEND                             │
+│   Node.js + Express (or Fastify)                                    │
+│                                                                     │
+│   ┌──────────────┐  ┌──────────────┐  ┌─────────────────────────┐  │
+│   │   Auth       │  │  Readings    │  │  Insights / Reports      │  │
+│   │   Service    │  │  API         │  │  Service                 │  │
+│   └──────────────┘  └──────────────┘  └─────────────────────────┘  │
+│                                                                     │
+│   Socket.io Server (real-time WebSocket)                            │
+│   • Pushes live readings to dashboard                               │
+│   • Broadcasts alerts / warnings                                    │
+└────────────────────────────┬────────────────────────────────────────┘
+                             │
+              ┌──────────────┼──────────────┐
+              ▼              ▼              ▼
+┌──────────────────┐  ┌─────────────────┐  ┌──────────────────┐
+│   PostgreSQL     │  │      Redis      │  │  Message Queue   │
+│   (Primary DB)   │  │   (Cache)       │  │  (MQTT / Rabbit) │
+│                   │  │                 │  │                  │
+│  • machines       │  │ • Live counts   │  │ • Ingests data   │
+│  • readings       │  │ • Session store │  │   from gateway   │
+│  • faults         │  │ • Recent cache  │  │ • Buffers spikes │
+│  • refuels        │  │                 │  │                  │
+│  • users          │  │                 │  │                  │
+│  • RLS policies   │  │                 │  │                  │
+└──────────────────┘  └─────────────────┘  └──────────────────┘
+                             │
+                             ▼
+                  ┌────────────────────┐
+                  │  Generator Edge    │
+                  │  Gateway / IoT Hub │
+                  │  (on-site device)  │
+                  │  • Reads sensors   │
+                  │  • Sends JSON via  │
+                  │    MQTT / HTTP     │
+                  └────────────────────┘
+</pre>
+
+<hr />
+
+<h2>3. COMPONENT DESCRIPTIONS</h2>
+
+<h3>3.1 FRONTEND LAYER</h3>
+
+<p><strong>Technical description:</strong><br />
+React + TypeScript single-page application (SPA) served as static assets on a CDN or edge network. Communicates with the Node.js backend via REST API and Socket.io WebSocket for real-time updates. Uses Recharts or Chart.js for telemetry visualisation, React Router for navigation, and Context API / Zustand for state management.</p>
+
+<p><strong>Layman's description:</strong><br />
+The user interface — the screens, buttons, charts and forms that operators see in their browser. Built with modern web tools so it feels fast, responsive and professional. Updates instantly when new generator data arrives, without needing to refresh the page.</p>
+
+<h3>3.2 BACKEND LAYER (Node.js + Express)</h3>
+
+<p><strong>Technical description:</strong><br />
+Node.js runtime with Express.js (or Fastify) exposing RESTful endpoints for CRUD operations on machines, readings, faults and users. Business logic for health calculations, maintenance scoring and insight generation lives here. Socket.io server handles bidirectional real-time communication for live telemetry streaming and instant alerts.</p>
+
+<p><strong>Layman's description:</strong><br />
+The brain of the system. It receives readings from the generators, processes them using health formulas, saves them to the database, and pushes updated dashboards to every user's screen in real time. It also handles login, permissions and file exports.</p>
+
+<h3>3.3 DATABASE LAYER (PostgreSQL)</h3>
+
+<p><strong>Technical description:</strong><br />
+Primary relational database storing machines, parameter definitions, readings, fault events, refuel events, users and roles. The calculation logic maps directly to Postgres stored functions or application-level queries. Row-Level Security (RLS) enforces tenant and role isolation at the database layer.</p>
+
+<p><strong>Layman's description:</strong><br />
+The permanent memory of the system. Every reading ever taken, every fault logged, every user account — all stored safely here. It is structured so the system can answer questions like "show me all generators with health below 50% in the last 30 days" efficiently and reliably.</p>
+
+<h3>3.4 REAL-TIME LAYER (Socket.io on Node.js)</h3>
+
+<p><strong>Technical description:</strong><br />
+WebSocket server co-located with the Express API. Generator gateways connect and emit <code>reading</code> events; the server validates, persists to Postgres, then broadcasts to subscribed dashboard clients. Supports room-based subscriptions per machine or per site.</p>
+
+<p><strong>Layman's description:</strong><br />
+The live connection between the physical generators and the dashboard. Instead of the dashboard asking "any new data?" every few seconds, the generators push new data the moment it is available. This is what makes the charts and alerts feel instant.</p>
+
+<h3>3.5 AUTHENTICATION LAYER</h3>
+
+<p><strong>Technical description — Option A (Custom):</strong><br />
+JWT-based authentication with bcrypt password hashing, refresh token rotation, and role-based access control (RBAC). Tokens stored in HTTP-only secure cookies. Role claims drive UI feature visibility and API route protection.</p>
+
+<p><strong>Technical description — Option B (Supabase Auth):</strong><br />
+Supabase Auth handles email/password, SSO (SAML/OAuth), MFA and magic links out of the box. Frontend configured with <code>NEXT_PUBLIC_SUPABASE_URL</code> and <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code>. Row-Level Security policies in Postgres restrict data access per authenticated user. Optional email templates and redirect URLs configured in the Supabase dashboard.</p>
+
+<p><strong>Layman's description:</strong><br />
+The security gate. Users must prove who they are before accessing the system. We can either build our own login system (full control, no external dependency) or use Supabase Auth (faster to deploy, enterprise features like SSO and MFA included).</p>
+
+<h3>3.6 MESSAGE QUEUE / EDGE GATEWAY</h3>
+
+<p><strong>Technical description:</strong><br />
+MQTT broker (e.g., EMQX or AWS IoT Core) or lightweight Node.js service that ingests JSON payloads from on-site generator gateways. Handles buffering during network outages, protocol translation (Modbus/SCADA → JSON), and forwards validated readings to the Node.js backend via HTTP or WebSocket.</p>
+
+<p><strong>Layman's description:</strong><br />
+The translator and postman between the physical generators and the cloud. Generator sensors speak different languages; this layer normalises everything into a standard format the system understands, and ensures no data is lost even if the internet connection flickers.</p>
+
+<h3>3.7 CACHE LAYER (Redis)</h3>
+
+<p><strong>Technical description:</strong><br />
+In-memory cache for hot dashboard aggregations: fleet health summary, recent readings, session data and live counts. Reduces Postgres query load for frequently accessed dashboard widgets. TTL-based expiry keeps cache consistent.</p>
+
+<p><strong>Layman's description:</strong><br />
+A fast scratchpad. Instead of asking the database the same question hundreds of times a minute (e.g., "what is the current fleet health?"), the system remembers the answer here and serves it instantly. This keeps the dashboard fast even with many users.</p>
+
+<h3>3.8 HOSTING &amp; DEPLOYMENT</h3>
+
+<p><strong>Technical description:</strong></p>
+<ul>
+  <li>Frontend: Vercel / Netlify / Azure Static Web Apps (static build + CDN)</li>
+  <li>Backend: Azure App Service, Azure Container Apps or AWS ECS (Docker container)</li>
+  <li>Database: Supabase managed Postgres or Azure Database for PostgreSQL</li>
+  <li>Redis: Supabase Redis add-on or Azure Cache for Redis</li>
+  <li>MQTT / Edge: EMQX cloud or self-hosted on a small edge VM at each site</li>
+  <li>CI/CD: GitHub Actions running tests and deployments on merge</li>
+</ul>
+
+<p><strong>Layman's description:</strong><br />
+Everything runs in the cloud on trusted platforms. The frontend is served from a global content delivery network for speed. The backend and database run on managed cloud services with automatic backups. The on-site edge device sits in the mine's control room and pushes data to the cloud.</p>
+
+<hr />
+
+<h2>4. AUTHENTICATION CONFIGURATION</h2>
+
+<h3>4.1 Custom Node.js Auth</h3>
+
+<p><strong>Environment variables required:</strong></p>
+<pre>
+JWT_SECRET            = strong random string (32+ characters)
+JWT_REFRESH_SECRET    = separate strong random string
+ACCESS_TOKEN_EXPIRY   = 15m
+REFRESH_TOKEN_EXPIRY  = 7d
+BCRYPT_ROUNDS         = 12
+</pre>
+
+<p><strong>How it works:</strong><br />
+Frontend stores access token in memory, refresh token in HTTP-only secure cookie. Backend validates on every request and refreshes silently. No external authentication provider dependency.</p>
+
+<h3>4.2 Supabase Auth</h3>
+
+<p><strong>Frontend environment variables:</strong></p>
+<pre>
+NEXT_PUBLIC_SUPABASE_URL       = https://&lt;project-ref&gt;.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY   = &lt;anon-public-key&gt;
+</pre>
+
+<p><strong>Backend environment variables (service role):</strong></p>
+<pre>
+SUPABASE_URL                    = https://&lt;project-ref&gt;.supabase.co
+SUPABASE_SERVICE_ROLE_KEY       = &lt;service-role-key&gt;
+</pre>
+
+<p><strong>Supabase dashboard setup steps:</strong></p>
+<ol>
+  <li>Enable Email provider (or SSO / SAML for enterprise)</li>
+  <li>Configure redirect URLs (e.g., https://app.geomine.com/auth/callback)</li>
+  <li>Create Row-Level Security policies on machines, readings, faults tables</li>
+  <li>Map roles via user_metadata.role or a separate profiles table</li>
+  <li>Enable MFA if required by policy</li>
+</ol>
+
+<hr />
+
+<h2>5. DATA FLOW — HOW A READING TRAVELS</h2>
+
+<pre>
+1. Generator sensor measures current, RPM, temp, power factor
+2. Edge gateway reads sensor, builds JSON payload
+3. MQTT broker receives payload (or gateway calls Node.js API directly)
+4. Node.js validates data, applies business rules
+5. Node.js saves reading to PostgreSQL
+6. Node.js broadcasts update via Socket.io to connected dashboards
+7. Frontend receives push, updates charts, recalculates health, shows alerts
+8. If health drops below threshold, Node.js pushes warning to all admins
+</pre>
+
+<p><strong>Layman's version:</strong><br />
+The generator measures itself → the local device packages that data → sends it to the cloud → the server checks it, saves it, and immediately pushes it to every screen that is watching → operators see the update instantly and the system flags any problems automatically.</p>
+
+<hr />
+
+<h2>6. TECHNOLOGY SELECTION RATIONALE</h2>
+
+<table>
+  <tr>
+    <th>Concern</th>
+    <th>Decision</th>
+    <th>Reason</th>
+  </tr>
+  <tr>
+    <td>Language</td>
+    <td>JavaScript / TypeScript</td>
+    <td>Demo logic is already JS — zero paradigm shift</td>
+  </tr>
+  <tr>
+    <td>Backend</td>
+    <td>Node.js + Express</td>
+    <td>Native JSON handling, ideal for IoT telemetry, large ecosystem</td>
+  </tr>
+  <tr>
+    <td>Database</td>
+    <td>PostgreSQL</td>
+    <td>Matches the existing schema, strong relational model, RLS for security</td>
+  </tr>
+  <tr>
+    <td>Real-time</td>
+    <td>Socket.io</td>
+    <td>Battle-tested WebSocket library, works seamlessly with Express</td>
+  </tr>
+  <tr>
+    <td>Frontend</td>
+    <td>React + TypeScript</td>
+    <td>Component model fits dashboard widgets, huge talent pool</td>
+  </tr>
+  <tr>
+    <td>Auth</td>
+    <td>Custom JWT or Supabase Auth</td>
+    <td>Custom = full control. Supabase = faster, enterprise-ready</td>
+  </tr>
+  <tr>
+    <td>Hosting</td>
+    <td>Cloud (Azure / AWS / Vercel)</td>
+    <td>Managed services, automatic backups, global CDN</td>
+  </tr>
+  <tr>
+    <td>Monitoring</td>
+    <td>Application Insights / Datadog</td>
+    <td>Node.js-native telemetry, structured logs, alerting</td>
+  </tr>
+</table>
+
+<hr />
+
+<h2>7. DELIVERY TIMELINE</h2>
+
+<h3>Phase 1 — MVP (4–6 weeks)</h3>
+<ul>
+  <li>React frontend with dashboard, detail view and login</li>
+  <li>Node.js + Express backend with health calculation APIs</li>
+  <li>PostgreSQL with seeded data and RLS</li>
+  <li>Socket.io for live updates</li>
+  <li>Authentication (custom or Supabase)</li>
+  <li>CSV export</li>
+  <li>Deployed to cloud (frontend CDN, backend container, managed Postgres)</li>
+</ul>
+
+<h3>Phase 2 — Production Hardening (2–3 weeks)</h3>
+<ul>
+  <li>MQTT edge gateway integration</li>
+  <li>PDF report generation</li>
+  <li>Email / Teams alerts for critical health drops</li>
+  <li>Audit logging</li>
+  <li>Automated backups and disaster recovery plan</li>
+  <li>Load testing and performance tuning</li>
+</ul>
+
+<h3>Phase 3 — Advanced Features (4–6 weeks)</h3>
+<ul>
+  <li>Predictive maintenance ML model (Python scikit-learn or TensorFlow, served via Node.js microservice or Python FastAPI sidecar)</li>
+  <li>Multi-site tenant isolation</li>
+  <li>Offline mobile app for miners (React Native or Flutter)</li>
+  <li>Advanced RUL (Remaining Useful Life) modelling</li>
+  <li>Integration with existing mine ERP / CMMS</li>
+</ul>
+
+<hr />
+
+<h2>8. KEY BENEFITS</h2>
+
+<ul>
+  <li><strong>No rewrite needed</strong> — the demo formulas map 1:1 to Postgres functions and Node.js service logic</li>
+  <li><strong>Incremental delivery</strong> — we can ship the MVP in 4–6 weeks and add features in phases</li>
+  <li><strong>Enterprise-ready</strong> — SSO, MFA, row-level security and cloud hosting from day one</li>
+  <li><strong>Scalable</strong> — Node.js + Postgres + Redis handles thousands of generators and concurrent users</li>
+  <li><strong>Maintainable</strong> — single full-stack JavaScript/TypeScript codebase, modern tooling, strong typing</li>
+  <li><strong>Future-proof</strong> — ML and mobile can be added without re-architecting</li>
+</ul>
+
+<hr />
+
+<h2>9. QUESTIONS FOR THE PANEL / STAKEHOLDERS</h2>
+
+<ol>
+  <li>Do we want custom auth or Supabase Auth for faster delivery?</li>
+  <li>Are generator gateways already in place, or do we need to spec the edge hardware?</li>
+  <li>Should we prioritise the ML predictive model in Phase 1, or treat it as Phase 3?</li>
+  <li>Do we need multi-tenant isolation (different mining companies) from the start?</li>
+  <li>What is the target go-live date for the MVP?</li>
+</ol>
+
+<hr />
+
+<p><em>Prepared for the GeoMine PMS university project panel.</em></p>
+
+</body>
+</html>
