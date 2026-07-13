@@ -58,27 +58,6 @@
         </button>
       </form>
 
-      <div class="auth-divider">DEMO CREDENTIALS</div>
-
-      <div class="auth-demo">
-        <div class="ad-title">PRE-SEEDED ACCOUNTS</div>
-        <div class="demo-cred">
-          <span class="dc-role">Admin</span>
-          <span class="dc-val">admin@geomine.com / <b>admin123</b></span>
-          <button class="demo-fill" data-fill="admin@geomine.com|admin123">Use</button>
-        </div>
-        <div class="demo-cred">
-          <span class="dc-role">Miner</span>
-          <span class="dc-val">miner@geomine.com / <b>miner123</b></span>
-          <button class="demo-fill" data-fill="miner@geomine.com|miner123">Use</button>
-        </div>
-        <div class="demo-cred">
-          <span class="dc-role">IT / Systems</span>
-          <span class="dc-val">it@geomine.com / <b>it123</b></span>
-          <button class="demo-fill" data-fill="it@geomine.com|it123">Use</button>
-        </div>
-      </div>
-
       <div class="auth-foot">Frontend-only demo · data stored in your browser (localStorage)</div>
     </div>
   </div>
@@ -100,16 +79,6 @@
       const show = pwInput.type === 'password';
       pwInput.type = show ? 'text' : 'password';
       pwToggle.innerHTML = show ? '<i class="fa-solid fa-eye-slash"></i>' : '<i class="fa-solid fa-eye"></i>';
-    });
-
-    // One-click demo credential fill.
-    document.querySelectorAll('.demo-fill').forEach(b => {
-      b.addEventListener('click', () => {
-        const [e, p] = b.getAttribute('data-fill').split('|');
-        document.getElementById('email').value = e;
-        pwInput.value = p;
-        errEl.classList.remove('show');
-      });
     });
 
     document.getElementById('loginForm').addEventListener('submit', (ev) => {
