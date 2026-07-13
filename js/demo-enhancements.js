@@ -25,41 +25,41 @@ const Demo = (function () {
       const pfTrend = getPowerFactorTrend(m.id);
 
       if (temp != null && thermal != null && thermal >= 80) {
-        insights.push({
-          machine: m.name, severity: thermal >= 100 ? 'critical' : 'warning',
-          title: 'Possible bearing overheating',
-          detail: `Bearing/stator temperature at ${temp}°C (thermal stress ${thermal}%). Inspect lubrication and cooling path.`,
-          confidence: Math.min(99, 60 + Math.round(thermal / 2)),
-        });
+      insights.push({
+        machineId: m.id, machine: m.name, severity: thermal >= 100 ? 'critical' : 'warning',
+        title: 'Possible bearing overheating',
+        detail: `Bearing/stator temperature at ${temp}°C (thermal stress ${thermal}%). Inspect lubrication and cooling path.`,
+        confidence: Math.min(99, 60 + Math.round(thermal / 2)),
+      });
       }
       if (loading != null && loading >= 90) {
         insights.push({
-          machine: m.name, severity: 'warning',
-          title: 'High electrical loading',
+        machineId: m.id, machine: m.name, severity: 'warning',
+        title: 'High electrical loading',
           detail: `Load at ${loading}% of rated current. Sustained overload risks winding insulation failure.`,
           confidence: Math.min(99, 55 + Math.round((loading - 90) * 3)),
         });
       }
       if (cool != null && cool >= 90) {
         insights.push({
-          machine: m.name, severity: 'warning',
-          title: 'Cooling efficiency decreasing',
+        machineId: m.id, machine: m.name, severity: 'warning',
+        title: 'Cooling efficiency decreasing',
           detail: `Coolant at ${cool}°C. Check radiator, fan drive and coolant level.`,
           confidence: Math.min(99, 50 + Math.round((cool - 90) * 4)),
         });
       }
       if (oil != null && oil < 3.2) {
         insights.push({
-          machine: m.name, severity: oil < 2.8 ? 'critical' : 'warning',
-          title: 'Lubrication inspection recommended',
+        machineId: m.id, machine: m.name, severity: oil < 2.8 ? 'critical' : 'warning',
+        title: 'Lubrication inspection recommended',
           detail: `Oil pressure low at ${oil} bar. Verify oil pump health and sump level.`,
           confidence: Math.min(99, 60 + Math.round((3.2 - oil) * 30)),
         });
       }
       if (pfTrend.direction === 'declining' && pf != null && pf < 0.85) {
         insights.push({
-          machine: m.name, severity: 'warning',
-          title: 'Power factor degrading',
+        machineId: m.id, machine: m.name, severity: 'warning',
+        title: 'Power factor degrading',
           detail: `PF trending down (now ${pf}). Motors may be lightly loaded or PFC capacitors failing.`,
           confidence: Math.min(99, 55 + pfTrend.sampleCount),
         });
@@ -91,7 +91,7 @@ const Demo = (function () {
           <div class="insight-title">${escapeHtml(ins.title)}</div>
           <div class="insight-conf">${ins.confidence}%</div>
         </div>
-        <div class="insight-machine">${escapeHtml(ins.machine)}</div>
+        <div class="insight-machine machine-link" data-mid="${ins.machineId || ''}" onclick="openMachine(this.getAttribute('data-mid'))">${escapeHtml(ins.machine)}</div>
         <div class="insight-detail">${escapeHtml(ins.detail)}</div>
         <div class="conf-track"><div class="conf-fill conf-${ins.severity}" style="width:${ins.confidence}%"></div></div>
       </div>`).join('');
