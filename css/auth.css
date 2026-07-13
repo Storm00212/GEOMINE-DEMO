@@ -1,0 +1,68 @@
+/* =========================================================
+   auth.css — login & signup pages.
+   Centered glass card over an industrial gradient backdrop.
+   ========================================================= */
+
+.auth-body {
+  margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center;
+  font-family: 'IBM Plex Sans', system-ui, sans-serif; color: var(--text);
+  background:
+    radial-gradient(1100px 600px at 85% -10%, rgba(79,195,217,0.12), transparent 60%),
+    radial-gradient(900px 600px at 0% 110%, rgba(232,163,61,0.10), transparent 55%),
+    var(--bg);
+  padding: 24px;
+}
+
+.auth-wrap { width: 100%; max-width: 410px; animation: fadeUp .5s ease both; }
+
+.auth-card {
+  background: var(--glass); backdrop-filter: blur(16px);
+  border: 1px solid var(--border); border-radius: 18px; padding: 34px 32px 30px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.45);
+}
+.auth-brand { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.auth-brand img { width: 38px; height: 38px; }
+.auth-brand .b-mark { font-size: 21px; font-weight: 600; letter-spacing: .5px; }
+.auth-brand .b-mark span { color: var(--amber); }
+.auth-sub { font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--text-faint); letter-spacing: 1.4px; margin: 2px 0 22px; }
+
+.auth-title { font-size: 20px; font-weight: 600; margin: 8px 0 4px; }
+.auth-desc { font-size: 13px; color: var(--text-dim); margin: 0 0 22px; }
+
+.auth-field { margin-bottom: 15px; position: relative; }
+.auth-field label { font-size: 12px; }
+.auth-input-wrap { position: relative; }
+.auth-input-wrap .lead-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-faint); font-size: 13px; }
+.auth-field input { padding-left: 36px; padding-right: 40px; }
+.auth-field input.with-toggle { padding-right: 40px; }
+.pw-toggle { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-faint); cursor: pointer; padding: 6px; font-size: 13px; }
+.pw-toggle:hover { color: var(--text); }
+
+.auth-row { display: flex; align-items: center; justify-content: space-between; margin: 4px 0 20px; }
+.remember { display: flex; align-items: center; gap: 8px; font-size: 12.5px; color: var(--text-dim); cursor: pointer; user-select: none; }
+.remember input { width: auto; margin: 0; accent-color: var(--cyan); }
+.auth-link { color: var(--cyan); font-size: 12.5px; text-decoration: none; }
+.auth-link:hover { text-decoration: underline; }
+
+.auth-btn { width: 100%; background: linear-gradient(135deg, var(--cyan), #3aa7bd); color: #062A30; border: none; border-radius: 10px; padding: 12px; font-size: 14px; font-weight: 600; cursor: pointer; transition: .18s; }
+.auth-btn:hover { filter: brightness(1.05); transform: translateY(-1px); box-shadow: 0 8px 22px rgba(79,195,217,.25); }
+
+.auth-divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; color: var(--text-faint); font-size: 11px; }
+.auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 1px; background: var(--border-soft); }
+
+.auth-demo { background: var(--panel-alt); border: 1px dashed var(--border); border-radius: 12px; padding: 14px 16px; }
+.auth-demo .ad-title { font-family: 'IBM Plex Mono', monospace; font-size: 10px; letter-spacing: 1px; color: var(--amber); margin-bottom: 10px; }
+.demo-cred { display: flex; justify-content: space-between; align-items: center; font-size: 12px; padding: 5px 0; }
+.demo-cred .dc-role { color: var(--text-dim); }
+.demo-cred .dc-val { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--text); }
+.demo-cred .dc-val b { color: var(--cyan); }
+.demo-fill { font-size: 11px; color: var(--text-faint); background: none; border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; cursor: pointer; }
+.demo-fill:hover { border-color: var(--cyan); color: var(--cyan); }
+
+.auth-foot { text-align: center; font-size: 12px; color: var(--text-faint); margin-top: 20px; }
+.auth-error { display: none; background: var(--red-dim); border: 1px solid #6B3230; color: #F1C0BC; border-radius: 8px; padding: 9px 12px; font-size: 12px; margin-bottom: 14px; }
+.auth-error.show { display: block; animation: shake .35s; }
+
+.auth-spinner { display: none; width: 16px; height: 16px; border: 2px solid rgba(6,42,48,.35); border-top-color: #062A30; border-radius: 50%; animation: spin .7s linear infinite; margin: 0 auto; }
+.auth-btn.loading .auth-spinner { display: inline-block; }
+.auth-btn.loading .auth-label { display: none; }
