@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GeoMine PMS — Sign in</title>
+  <link rel="icon" type="image/png" href="assets/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/auth.css" />
+  <link rel="stylesheet" href="css/animations.css" />
+</head>
+<body class="auth-body">
+
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <img src="assets/logo.svg" alt="GeoMine logo" />
+        <div class="b-mark">GEOMINE<span> · PMS</span></div>
+      </div>
+      <div class="auth-sub">PREDICTIVE MAINTENANCE SYSTEM</div>
+
+      <h1 class="auth-title">Sign in</h1>
+      <p class="auth-desc">Access your mining generator fleet dashboard.</p>
+
+      <div class="auth-error" id="authError"></div>
+
+      <form id="loginForm" autocomplete="off">
+        <div class="auth-field">
+          <label for="email">Email</label>
+          <div class="auth-input-wrap">
+            <i class="fa-solid fa-envelope lead-icon"></i>
+            <input type="email" id="email" placeholder="you@geomine.com" required />
+          </div>
+        </div>
+
+        <div class="auth-field">
+          <label for="password">Password</label>
+          <div class="auth-input-wrap">
+            <i class="fa-solid fa-lock lead-icon"></i>
+            <input type="password" id="password" class="with-toggle" placeholder="••••••••" required />
+            <button type="button" class="pw-toggle" id="pwToggle" title="Show password">
+              <i class="fa-solid fa-eye"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="auth-row">
+          <label class="remember"><input type="checkbox" id="remember" checked /> Remember me</label>
+          <a class="auth-link" href="signup.html">Create account</a>
+        </div>
+
+        <button type="submit" class="auth-btn" id="loginBtn">
+          <span class="auth-label">Sign in</span>
+          <span class="auth-spinner"></span>
+        </button>
+      </form>
+
+      <div class="auth-divider">DEMO CREDENTIALS</div>
+
+      <div class="auth-demo">
+        <div class="ad-title">PRE-SEEDED ACCOUNTS</div>
+        <div class="demo-cred">
+          <span class="dc-role">Admin</span>
+          <span class="dc-val">admin@geomine.com / <b>admin123</b></span>
+          <button class="demo-fill" data-fill="admin@geomine.com|admin123">Use</button>
+        </div>
+        <div class="demo-cred">
+          <span class="dc-role">Miner</span>
+          <span class="dc-val">miner@geomine.com / <b>miner123</b></span>
+          <button class="demo-fill" data-fill="miner@geomine.com|miner123">Use</button>
+        </div>
+        <div class="demo-cred">
+          <span class="dc-role">IT / Systems</span>
+          <span class="dc-val">it@geomine.com / <b>it123</b></span>
+          <button class="demo-fill" data-fill="it@geomine.com|it123">Use</button>
+        </div>
+      </div>
+
+      <div class="auth-foot">Frontend-only demo · data stored in your browser (localStorage)</div>
+    </div>
+  </div>
+
+  <script src="js/utils.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    // If already signed in, skip straight to the dashboard.
+    Auth.redirectIfAuthed();
+
+    const errEl = document.getElementById('authError');
+    const btn = document.getElementById('loginBtn');
+    const pwToggle = document.getElementById('pwToggle');
+    const pwInput = document.getElementById('password');
+
+    // Password visibility toggle.
+    pwToggle.addEventListener('click', () => {
+      const show = pwInput.type === 'password';
+      pwInput.type = show ? 'text' : 'password';
+      pwToggle.innerHTML = show ? '<i class="fa-solid fa-eye-slash"></i>' : '<i class="fa-solid fa-eye"></i>';
+    });
+
+    // One-click demo credential fill.
+    document.querySelectorAll('.demo-fill').forEach(b => {
+      b.addEventListener('click', () => {
+        const [e, p] = b.getAttribute('data-fill').split('|');
+        document.getElementById('email').value = e;
+        pwInput.value = p;
+        errEl.classList.remove('show');
+      });
+    });
+
+    document.getElementById('loginForm').addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      errEl.classList.remove('show');
+      const email = document.getElementById('email').value;
+      const password = pwInput.value;
+      const remember = document.getElementById('remember').checked;
+
+      btn.classList.add('loading');
+      // Small delay so the spinner is visible (demo feel).
+      setTimeout(() => {
+        const res = Auth.login(email, password, remember);
+        btn.classList.remove('loading');
+        if (!res.ok) {
+          errEl.textContent = res.error;
+          errEl.classList.add('show');
+          return;
+        }
+        window.location.href = 'dashboard.html';
+      }, 450);
+    });
+  </script>
+</body>
+</html>
