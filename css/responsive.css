@@ -1,0 +1,49 @@
+/* =========================================================
+   responsive.css — breakpoints for tablet & mobile.
+   ========================================================= */
+
+@media (max-width: 1180px) {
+  .stat-grid { grid-template-columns: repeat(3, 1fr); }
+  .chart-grid { grid-template-columns: repeat(2, 1fr); }
+  .status-grid { grid-template-columns: repeat(2, 1fr); }
+  .split { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 920px) {
+  .app { flex-direction: column; }
+  .sidebar {
+    width: 100%; height: auto; position: static; flex-direction: row;
+    align-items: center; flex-wrap: wrap; gap: 10px; padding: 12px 16px;
+  }
+  .brand { border-bottom: none; border-right: 1px solid var(--border-soft); margin: 0; padding: 0 14px 0 4px; }
+  .demo-tag { display: none; }
+  .nav-items-row { display: flex; gap: 6px; flex: 1; flex-wrap: wrap; }
+  .sidebar-footer { margin: 0; border: none; padding: 0; }
+  .nav-item { margin-bottom: 0; }
+  .nav-role { display: none; }
+  #navItems { display: flex; gap: 6px; flex-wrap: wrap; flex: 1; }
+  .topbar { flex-wrap: wrap; height: auto; padding: 12px 16px; gap: 10px; }
+  .topbar .spacer { display: none; }
+  .content { padding: 18px 16px 50px; }
+}
+
+@media (max-width: 640px) {
+  .stat-grid { grid-template-columns: repeat(2, 1fr); }
+  .chart-grid { grid-template-columns: 1fr; }
+  .status-grid { grid-template-columns: 1fr; }
+  .metric-grid { grid-template-columns: repeat(2, 1fr); }
+  .detail-charts { grid-template-columns: 1fr; }
+  .fleet-metrics { gap: 12px; }
+  .fleet-metric-label { font-size: 8.5px; }
+  .demo-controls { width: 100%; order: 5; }
+  .demo-controls .dc-label { display: none; }
+  .dc-btn { flex: 1; padding: 8px 6px; font-size: 11px; }
+  .topbar-stat { font-size: 10.5px; }
+  h1 { font-size: 18px; }
+  .notif-center { width: 100%; }
+}
+
+@media (max-width: 420px) {
+  .user-meta { display: none; }
+  .auth-card { padding: 26px 20px; }
+}
