@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GeoMine PMS — Dashboard</title>
+  <link rel="icon" type="image/png" href="assets/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <link rel="stylesheet" href="css/dashboard.css" />
+  <link rel="stylesheet" href="css/animations.css" />
+  <link rel="stylesheet" href="css/responsive.css" />
+</head>
+<body>
+  <div class="app">
+    <!-- ============ SIDEBAR ============ -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-mark"><img src="assets/logo.svg" alt="GeoMine" /> GEOMINE<span> · PMS</span></div>
+        <div class="brand-sub">PREDICTIVE MAINTENANCE</div>
+        <div class="demo-tag">LIVE DEMO — LOCAL DATA</div>
+      </div>
+      <nav id="navItems"></nav>
+      <div class="sidebar-footer">
+        <button class="reset-btn" id="resetBtn"><i class="fa-solid fa-arrows-rotate"></i> Reset demo data</button>
+      </div>
+    </aside>
+
+    <!-- ============ MAIN ============ -->
+    <div class="main">
+      <!-- Topbar -->
+      <header class="topbar">
+        <div class="page-title" id="pageTitle">Fleet Analytics</div>
+
+        <div class="topbar-stat" title="System status">
+          <span class="online-dot"></span> System Online
+        </div>
+        <div class="topbar-stat" title="Current time">
+          <i class="fa-regular fa-clock"></i> <span class="live-clock" id="liveClock">--:--:--</span>
+        </div>
+        <div class="topbar-stat" id="lastSync" title="Last data sync">Last sync —</div>
+
+        <div class="spacer"></div>
+
+        <!-- Admin-only demo controls -->
+        <div class="demo-controls" id="demoControls">
+          <span class="dc-label">DEMO</span>
+          <button class="dc-btn healthy" data-demo="healthy"><i class="fa-solid fa-heart-pulse"></i> Healthy</button>
+          <button class="dc-btn warning" data-demo="warning"><i class="fa-solid fa-triangle-exclamation"></i> Warning</button>
+          <button class="dc-btn critical" data-demo="critical"><i class="fa-solid fa-fire"></i> Critical</button>
+          <button class="dc-btn reset" data-demo="reset"><i class="fa-solid fa-arrows-rotate"></i> Reset</button>
+        </div>
+
+        <button class="icon-btn" id="bellBtn" title="Notifications">
+          <i class="fa-solid fa-bell"></i>
+          <span class="notif-badge" id="notifBadge" style="display:none">0</span>
+        </button>
+
+        <div class="user-chip" id="userChip"></div>
+        <button class="icon-btn" id="logoutBtn" title="Log out"><i class="fa-solid fa-right-from-bracket"></i></button>
+      </header>
+
+      <!-- Content -->
+      <main class="content">
+
+        <!-- ===== ENTRY ===== -->
+        <section class="screen" id="screen-entry">
+          <h1>Log a reading</h1>
+          <p class="subtitle">Select a generator and enter its current parameter values.</p>
+          <div class="card">
+            <div class="field">
+              <label>Generator</label>
+              <select id="entryMachine"></select>
+            </div>
+            <div class="field">
+              <label>Reading time</label>
+              <input type="datetime-local" id="entryTime" />
+              <p class="helper">Defaults to now — change this if you're logging an earlier shift.</p>
+            </div>
+            <div id="entryParams"></div>
+            <button class="btn" onclick="submitReading()"><i class="fa-solid fa-floppy-disk"></i> Submit reading</button>
+          </div>
+
+          <div class="card">
+            <div class="group-label">Your recent entries</div>
+            <div id="myHistory"></div>
+          </div>
+        </section>
+
+        <!-- ===== DASHBOARD (admin analytics) ===== -->
+        <section class="screen" id="screen-dashboard">
+          <div class="page-head">
+            <div>
+              <h1 style="display:inline">Fleet analytics</h1>
+              <button class="link-btn" onclick="showScreen('reports')" style="margin-left:12px"><i class="fa-solid fa-file-csv"></i> Export data →</button>
+            </div>
+          </div>
+          <p class="subtitle" id="fleetSub"></p>
+
+          <div class="stat-grid" id="statGrid"></div>
+
+          <div class="group-label">Live telemetry trends</div>
+          <div class="chart-grid stagger">
+            <div class="chart-box"><h3><i class="fa-solid fa-temperature-half"></i> Temperature trend</h3><div class="chart-canvas-wrap"><canvas id="chartTemp"></canvas></div></div>
+            <div class="chart-box"><h3><i class="fa-solid fa-bolt"></i> Current trend</h3><div class="chart-canvas-wrap"><canvas id="chartCurrent"></canvas></div></div>
+            <div class="chart-box"><h3><i class="fa-solid fa-gauge-high"></i> RPM trend</h3><div class="chart-canvas-wrap"><canvas id="chartRpm"></canvas></div></div>
+            <div class="chart-box"><h3><i class="fa-solid fa-wave-square"></i> Power factor trend</h3><div class="chart-canvas-wrap"><canvas id="chartPf"></canvas></div></div>
+            <div class="chart-box"><h3><i class="fa-solid fa-heart-pulse"></i> Fleet health</h3><div class="chart-canvas-wrap"><canvas id="chartHealth"></canvas></div></div>
+            <div class="chart-box"><h3><i class="fa-solid fa-list-ol"></i> Maintenance priority</h3><div class="chart-canvas-wrap"><canvas id="chartPriority"></canvas></div></div>
+          </div>
+
+          <div class="split" style="margin-top:18px">
+            <div>
+              <div class="group-label">Generator health · sorted by maintenance priority</div>
+              <div class="card" id="fleetList"></div>
+              <div id="flaggedSection"></div>
+              <div class="group-label" style="margin-top:20px">Recent readings</div>
+              <div class="card" id="recentList"></div>
+            </div>
+            <div>
+              <div class="group-label">AI insights</div>
+              <div id="aiInsights"></div>
+            </div>
+          </div>
+
+          <div class="group-label">Activity feed</div>
+          <div class="card"><div class="feed" id="activityFeed"></div></div>
+        </section>
+
+        <!-- ===== STATUS (miner read-only) ===== -->
+        <section class="screen" id="screen-status">
+          <h1>Generator status</h1>
+          <p class="subtitle">Live read-only overview of the fleet. Contact an admin for analytics.</p>
+          <div class="status-grid" id="statusGrid"></div>
+          <div class="card" style="margin-top:16px">
+            <div class="group-label">Your recent submissions</div>
+            <div id="statusHistory"></div>
+          </div>
+        </section>
+
+        <!-- ===== DETAIL ===== -->
+        <section class="screen" id="screen-detail">
+          <div class="page-head">
+            <h1 id="detailName"></h1>
+          </div>
+          <p class="subtitle" id="detailLocation"></p>
+          <div id="detailRecommendation"></div>
+          <div id="detailFaults"></div>
+
+          <div class="detail-charts" style="margin-top:18px">
+            <div class="chart-box"><h3><i class="fa-solid fa-temperature-half"></i> Bearing temp</h3><div class="chart-canvas-wrap"><canvas id="dChartTemp"></canvas></div></div>
+            <div class="chart-box"><h3><i class="fa-solid fa-bolt"></i> Output current</h3><div class="chart-canvas-wrap"><canvas id="dChartCurrent"></canvas></div></div>
+            <div class="chart-box"><h3><i class="fa-solid fa-gauge-high"></i> Speed (RPM)</h3><div class="chart-canvas-wrap"><canvas id="dChartRpm"></canvas></div></div>
+            <div class="chart-box"><h3><i class="fa-solid fa-wave-square"></i> Power factor</h3><div class="chart-canvas-wrap"><canvas id="dChartPf"></canvas></div></div>
+          </div>
+
+          <div class="split" style="margin-top:16px">
+            <div>
+              <div class="card">
+                <div class="group-label">Latest readings</div>
+                <div class="metric-grid" id="detailLatest" style="margin-bottom:18px"></div>
+                <div class="group-label">Calculated — physics</div>
+                <div class="metric-grid" id="detailPhysics" style="margin-bottom:18px"></div>
+                <div class="group-label">Heuristic — pending calibration</div>
+                <div class="metric-grid" id="detailHeuristic"></div>
+                <div class="rul-note"><div class="rul-title">Remaining useful life: not yet available</div>
+                  <div class="rul-body">RUL requires a degradation curve calibrated against historical failure data, which doesn't exist yet. Revisit once more readings and at least one documented failure/service event have accumulated.</div></div>
+              </div>
+            </div>
+            <div>
+              <div class="card gauge-box">
+                <div class="group-label" style="align-self:flex-start">Health index</div>
+                <div class="chart-canvas-wrap"><canvas id="dChartGauge"></canvas></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- ===== REPORTS ===== -->
+        <section class="screen" id="screen-reports">
+          <h1>Export data</h1>
+          <p class="subtitle">Download logged readings as a CSV file.</p>
+          <div class="card">
+            <div class="field"><label>Generator</label><select id="reportMachine"><option value="all">All generators</option></select></div>
+            <div class="field-row">
+              <div class="field"><label>From</label><input type="date" id="reportFrom" /></div>
+              <div class="field"><label>To</label><input type="date" id="reportTo" /></div>
+            </div>
+            <button class="btn amber" onclick="downloadCsv()"><i class="fa-solid fa-file-csv"></i> Download CSV</button>
+          </div>
+        </section>
+
+      </main>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- ============ SCRIPTS (load order matters) ============ -->
+  <script src="js/utils.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/health.js"></script>
+  <script src="js/notifications.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/simulation.js"></script>
+  <script src="js/csv.js"></script>
+  <script src="js/demo-enhancements.js"></script>
+  <script src="js/dashboard.js"></script>
+</body>
+</html>
