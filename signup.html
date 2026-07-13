@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GeoMine PMS — Create account</title>
+  <link rel="icon" type="image/png" href="assets/favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="css/auth.css" />
+  <link rel="stylesheet" href="css/animations.css" />
+</head>
+<body class="auth-body">
+
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <img src="assets/logo.svg" alt="GeoMine logo" />
+        <div class="b-mark">GEOMINE<span> · PMS</span></div>
+      </div>
+      <div class="auth-sub">MINER REGISTRATION</div>
+
+      <h1 class="auth-title">Create your account</h1>
+      <p class="auth-desc">New accounts are created as <b>Miner</b> role. An admin can promote you later.</p>
+
+      <div class="auth-error" id="authError"></div>
+
+      <form id="signupForm" autocomplete="off">
+        <div class="auth-field">
+          <label for="name">Full name</label>
+          <div class="auth-input-wrap">
+            <i class="fa-solid fa-user lead-icon"></i>
+            <input type="text" id="name" placeholder="e.g. Jane Doe" required />
+          </div>
+        </div>
+
+        <div class="auth-field">
+          <label for="email">Email</label>
+          <div class="auth-input-wrap">
+            <i class="fa-solid fa-envelope lead-icon"></i>
+            <input type="email" id="email" placeholder="you@geomine.com" required />
+          </div>
+        </div>
+
+        <div class="auth-field">
+          <label for="password">Password</label>
+          <div class="auth-input-wrap">
+            <i class="fa-solid fa-lock lead-icon"></i>
+            <input type="password" id="password" class="with-toggle" placeholder="At least 6 characters" required />
+            <button type="button" class="pw-toggle" id="pwToggle" title="Show password"><i class="fa-solid fa-eye"></i></button>
+          </div>
+        </div>
+
+        <div class="auth-field">
+          <label for="confirm">Confirm password</label>
+          <div class="auth-input-wrap">
+            <i class="fa-solid fa-shield-check lead-icon"></i>
+            <input type="password" id="confirm" placeholder="Re-enter password" required />
+          </div>
+        </div>
+
+        <button type="submit" class="auth-btn" id="signupBtn">
+          <span class="auth-label">Create account</span>
+          <span class="auth-spinner"></span>
+        </button>
+      </form>
+
+      <div class="auth-foot">Already have an account? <a class="auth-link" href="index.html">Sign in</a></div>
+    </div>
+  </div>
+
+  <script src="js/utils.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    Auth.redirectIfAuthed();
+    const errEl = document.getElementById('authError');
+    const btn = document.getElementById('signupBtn');
+    const pwToggle = document.getElementById('pwToggle');
+    const pwInput = document.getElementById('password');
+
+    pwToggle.addEventListener('click', () => {
+      const show = pwInput.type === 'password';
+      pwInput.type = show ? 'text' : 'password';
+      pwToggle.innerHTML = show ? '<i class="fa-solid fa-eye-slash"></i>' : '<i class="fa-solid fa-eye"></i>';
+    });
+
+    document.getElementById('signupForm').addEventListener('submit', (ev) => {
+      ev.preventDefault();
+      errEl.classList.remove('show');
+      const name = document.getElementById('name').value.trim();
+      const email = document.getElementById('email').value.trim();
+      const password = pwInput.value;
+      const confirm = document.getElementById('confirm').value;
+
+      if (password.length < 6) { showErr('Password must be at least 6 characters.'); return; }
+      if (password !== confirm) { showErr('Passwords do not match.'); return; }
+
+      btn.classList.add('loading');
+      setTimeout(() => {
+        const res = Auth.signup(name, email, password);
+        btn.classList.remove('loading');
+        if (!res.ok) { showErr(res.error); return; }
+        window.location.href = 'dashboard.html';
+      }, 450);
+    });
+
+    function showErr(msg) { errEl.textContent = msg; errEl.classList.add('show'); }
+  </script>
+</body>
+</html>
