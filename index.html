@@ -22,8 +22,10 @@
       </div>
       <div class="auth-sub">PREDICTIVE MAINTENANCE SYSTEM</div>
 
-      <h1 class="auth-title">Sign in</h1>
-      <p class="auth-desc">Access your mining generator fleet dashboard.</p>
+      <div class="auth-header">
+        <h1 class="auth-title">Sign in</h1>
+        <p class="auth-desc">Access your mining generator fleet dashboard.</p>
+      </div>
 
       <div class="auth-error" id="authError"></div>
 
@@ -32,7 +34,7 @@
           <label for="email">Email</label>
           <div class="auth-input-wrap">
             <i class="fa-solid fa-envelope lead-icon"></i>
-            <input type="email" id="email" placeholder="you@geomine.com" required />
+            <input type="email" id="email" placeholder="you@company.com" required />
           </div>
         </div>
 
@@ -40,8 +42,8 @@
           <label for="password">Password</label>
           <div class="auth-input-wrap">
             <i class="fa-solid fa-lock lead-icon"></i>
-            <input type="password" id="password" class="with-toggle" placeholder="••••••••" required />
-            <button type="button" class="pw-toggle" id="pwToggle" title="Show password">
+            <input type="password" id="password" class="with-toggle" placeholder="Enter your password" required />
+            <button type="button" class="pw-toggle" id="pwToggle" title="Show password" aria-label="Toggle password visibility">
               <i class="fa-solid fa-eye"></i>
             </button>
           </div>
@@ -57,8 +59,6 @@
           <span class="auth-spinner"></span>
         </button>
       </form>
-
-      <div class="auth-foot">Frontend-only demo · data stored in your browser (localStorage)</div>
     </div>
   </div>
 
@@ -66,7 +66,6 @@
   <script src="js/store.js"></script>
   <script src="js/auth.js"></script>
   <script>
-    // If already signed in, skip straight to the dashboard.
     Auth.redirectIfAuthed();
 
     const errEl = document.getElementById('authError');
@@ -74,7 +73,6 @@
     const pwToggle = document.getElementById('pwToggle');
     const pwInput = document.getElementById('password');
 
-    // Password visibility toggle.
     pwToggle.addEventListener('click', () => {
       const show = pwInput.type === 'password';
       pwInput.type = show ? 'text' : 'password';
@@ -89,7 +87,6 @@
       const remember = document.getElementById('remember').checked;
 
       btn.classList.add('loading');
-      // Small delay so the spinner is visible (demo feel).
       setTimeout(() => {
         const res = Auth.login(email, password, remember);
         btn.classList.remove('loading');
@@ -99,7 +96,7 @@
           return;
         }
         window.location.href = 'dashboard.html';
-      }, 450);
+      }, 420);
     });
   </script>
 </body>
