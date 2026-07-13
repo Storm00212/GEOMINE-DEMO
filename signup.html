@@ -22,8 +22,10 @@
       </div>
       <div class="auth-sub">MINER REGISTRATION</div>
 
-      <h1 class="auth-title">Create your account</h1>
-      <p class="auth-desc">New accounts are created as <b>Miner</b> role. An admin can promote you later.</p>
+      <div class="auth-header">
+        <h1 class="auth-title">Create your account</h1>
+        <p class="auth-desc">New accounts are created as <b>Miner</b> role. An admin can promote you later.</p>
+      </div>
 
       <div class="auth-error" id="authError"></div>
 
@@ -40,7 +42,7 @@
           <label for="email">Email</label>
           <div class="auth-input-wrap">
             <i class="fa-solid fa-envelope lead-icon"></i>
-            <input type="email" id="email" placeholder="you@geomine.com" required />
+            <input type="email" id="email" placeholder="you@company.com" required />
           </div>
         </div>
 
@@ -49,7 +51,9 @@
           <div class="auth-input-wrap">
             <i class="fa-solid fa-lock lead-icon"></i>
             <input type="password" id="password" class="with-toggle" placeholder="At least 6 characters" required />
-            <button type="button" class="pw-toggle" id="pwToggle" title="Show password"><i class="fa-solid fa-eye"></i></button>
+            <button type="button" class="pw-toggle" id="pwToggle" title="Show password" aria-label="Toggle password visibility">
+              <i class="fa-solid fa-eye"></i>
+            </button>
           </div>
         </div>
 
@@ -104,7 +108,7 @@
         btn.classList.remove('loading');
         if (!res.ok) { showErr(res.error); return; }
         window.location.href = 'dashboard.html';
-      }, 450);
+      }, 420);
     });
 
     function showErr(msg) { errEl.textContent = msg; errEl.classList.add('show'); }
