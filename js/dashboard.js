@@ -304,22 +304,37 @@ function renderFlagged(elId) {
   const el = document.getElementById(elId);
   if (!el) return;
   const flagged = STATE.readings.filter(r => r.flagged).sort((a, b) => b.recordedAt - a.recordedAt).slice(0, 6);
-  el.innerHTML = flagged.length ? `
+  const flaggedWrap = document.getElementById('flaggedSection');
+  if (!flagged.length) { flaggedWrap.innerHTML = ''; return; }
+  flaggedWrap.innerHTML = `
     <div class="group-label" style="color:var(--red);">Out-of-range readings</div>
     <div class="card tint-red">${flagged.map(r => {
       const m = machineById(r.machineId), p = paramDef(r.key);
-      return `<div class="list-row"><b>${m.name}</b> — ${p.label}: ${r.value}${p.unit} <span class="ts">${new Date(r.recordedAt).toLocaleString()}</span></div>`;
-    }).join('')}</div>` : '';
+      return `<div class="list-row"><span class="machine-link" data-mid="${m.id}">${m.name}</span> — ${p.label}: ${r.value}${p.unit} <span class="ts">${new Date(r.recordedAt).toLocaleString()}</span></div>`;
+    }).join('')}</div>`;
+  $all('#flaggedSection .machine-link').forEach(el => {
+    el.style.cursor = 'pointer';
+    el.style.color = 'var(--red)';
+    el.style.textDecoration = 'underline';
+    el.addEventListener('click', () => openMachine(el.getAttribute('data-mid')));
+  });
 }
 
 function renderRecent(elId) {
   const el = document.getElementById(elId);
   if (!el) return;
   const recent = [...STATE.readings].sort((a, b) => b.recordedAt - a.recordedAt).slice(0, 6);
-  el.innerHTML = recent.map(r => {
+  const recentEl = document.getElementById('recentList');
+  recentEl.innerHTML = recent.map(r => {
     const m = machineById(r.machineId), p = paramDef(r.key);
-    return `<div class="list-row">${m.name} — ${p.label}: ${r.value}${p.unit}<span class="ts">${new Date(r.recordedAt).toLocaleString()}</span></div>`;
+    return `<div class="list-row"><span class="machine-link" data-mid="${m.id}">${m.name}</span> — ${p.label}: ${r.value}${p.unit}<span class="ts">${new Date(r.recordedAt).toLocaleString()}</span></div>`;
   }).join('');
+  $all('#recentList .machine-link').forEach(el => {
+    el.style.cursor = 'pointer';
+    el.style.color = 'var(--cyan)';
+    el.style.textDecoration = 'underline';
+    el.addEventListener('click', () => openMachine(el.getAttribute('data-mid')));
+  });
 }
 
 /* ---------------------------------------------------------
@@ -332,7 +347,7 @@ function renderStatus() {
     const rec = getMaintenanceRecommendation(m.id);
     const health = getHealthIndex(m.id);
     const tone = rec.status === 'needs_maintenance' ? 'red' : rec.status === 'watch' ? 'amber' : 'green';
-    return `<div class="gen-card gen-${tone}">
+    return `<div class="gen-card gen-${tone}" data-mid="${m.id}" style="cursor:pointer">
       <div class="gen-head"><span class="dot ${statusDot(m.id)}"></span><span class="gen-name">${m.name}</span>
         <span class="gen-badge badge-${tone}">${rec.status.replace('_', ' ')}</span></div>
       <div class="gen-loc">${m.location}</div>
@@ -344,6 +359,9 @@ function renderStatus() {
       <div class="gen-bar"><div class="gen-bar-fill" style="width:${Math.max(0, Math.min(100, health || 0))}%; background:${statusColor(rec.status)}"></div></div>
     </div>`;
   }).join('');
+  $all('#statusGrid .gen-card').forEach(card => {
+    card.addEventListener('click', () => openMachine(card.getAttribute('data-mid')));
+  });
 
   const hist = document.getElementById('statusHistory');
   if (hist) {
@@ -474,3 +492,7 @@ function refreshAll() {
 
 /* Expose to global scope for inline handlers / debugging. */
 window.App.dashboard = { showScreen, openMachine, submitReading, downloadCsv, refreshAll };
+window.showScreen = showScreen;
+window.openMachine = openMachine;
+window.submitReading = submitReading;
+window.downloadCsv = downloadCsv;
