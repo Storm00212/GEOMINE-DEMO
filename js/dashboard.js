@@ -101,7 +101,7 @@ function wireEvents() {
     }
   });
 
-  // Theme toggle.
+  // Theme toggle....
   const themeBtn = document.getElementById('themeToggle');
   if (themeBtn) {
     const saved = localStorage.getItem('geomine_theme') || 'dark';
